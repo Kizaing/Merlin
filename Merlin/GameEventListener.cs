@@ -25,18 +25,18 @@ namespace Impostor.Plugins.Example.Handlers
 
         static System.Random rnd = new System.Random();
 
-        struct JesterGame
+        struct MerlinGame
         {
-            public int JesterClientId;
-            public bool JesterOn;
-            public bool Jesterwin;
+            public int MerlinClientId;
+            public bool MerlinOn;
+            public bool Merlinwin;
             public bool GameEnded;
             public bool CountingDown;
-            public bool JesterInGame;
-            public string Jestername;
+            public bool MerlinInGame;
+            public string Merlinname;
         }
     
-        Dictionary<string, JesterGame> JesterGames = new Dictionary<string, JesterGame>();
+        Dictionary<string, MerlinGame> MerlinGames = new Dictionary<string, MerlinGame>();
 
         public GameEventListener(ILogger<ExamplePlugin> logger)
         {
@@ -69,13 +69,13 @@ namespace Impostor.Plugins.Example.Handlers
         [EventListener]
         public void OnGameCreated(IGameCreatedEvent e)
         {
-            JesterGame jgame = new JesterGame();
-            jgame.JesterOn = true;
-            jgame.Jesterwin = false;
+            MerlinGame jgame = new MerlinGame();
+            jgame.MerlinOn = true;
+            jgame.Merlinwin = false;
             jgame.GameEnded = false;
             jgame.CountingDown = false;
-            jgame.JesterInGame = false;
-            JesterGames.Add(e.Game.Code, jgame);
+            jgame.MerlinInGame = false;
+            MerlinGames.Add(e.Game.Code, jgame);
         }
 
         [EventListener]
@@ -83,14 +83,14 @@ namespace Impostor.Plugins.Example.Handlers
         {
             if (e.SecondsLeft == 5)
             {
-                JesterGame jgame = JesterGames[e.Game.Code];
+                MerlinGame jgame = MerlinGames[e.Game.Code];
                 jgame.CountingDown = true;
-                JesterGames[e.Game.Code] = jgame;
+                MerlinGames[e.Game.Code] = jgame;
 
                 _logger.LogInformation($"Countdown started.");
-                if (JesterGames[e.Game.Code].JesterOn)
+                if (MerlinGames[e.Game.Code].MerlinOn)
                 {
-                    Task.Run(async () => await AssignJester(e).ConfigureAwait(false));
+                    Task.Run(async () => await AssignMerlin(e).ConfigureAwait(false));
                     foreach (var player in e.Game.Players)
                     {
                         Task.Run(async () => await MakePlayerLookAtChat(player).ConfigureAwait(false));
@@ -99,7 +99,7 @@ namespace Impostor.Plugins.Example.Handlers
             }
         }      
 
-        private async Task AssignJester(IPlayerSetStartCounterEvent e)
+        private async Task AssignMerlin(IPlayerSetStartCounterEvent e)
         {
             List<IClientPlayer> gameplayers = new List<IClientPlayer>();
             foreach (var player in e.Game.Players)
@@ -108,13 +108,13 @@ namespace Impostor.Plugins.Example.Handlers
             }
             int r = rnd.Next(gameplayers.Count);
 
-            JesterGame jgame = JesterGames[e.Game.Code];
-            jgame.JesterClientId = gameplayers[r].Client.Id;
-            jgame.Jestername = gameplayers[r].Character.PlayerInfo.PlayerName;
-            JesterGames[e.Game.Code] = jgame;
+            MerlinGame jgame = MerlinGames[e.Game.Code];
+            jgame.MerlinClientId = gameplayers[r].Client.Id;
+            jgame.Merlinname = gameplayers[r].Character.PlayerInfo.PlayerName;
+            MerlinGames[e.Game.Code] = jgame;
 
             await ServerSendChatToPlayerAsync($"You're the JESTER! (unless you'll be an imposter)", gameplayers[r].Character).ConfigureAwait(false);
-            _logger.LogInformation($"- {JesterGames[e.Game.Code].Jestername} is probably the jester.");    
+            _logger.LogInformation($"- {MerlinGames[e.Game.Code].Merlinname} is probably the merlin.");    
         }
 
         private async Task MakePlayerLookAtChat(IClientPlayer player)
@@ -129,55 +129,55 @@ namespace Impostor.Plugins.Example.Handlers
         [EventListener]
         public void OnGamePlayerJoined(IGamePlayerJoinedEvent e)
         {
-            if (JesterGames[e.Game.Code].CountingDown)
+            if (MerlinGames[e.Game.Code].CountingDown)
             {
-                _logger.LogInformation($"Assigning Jester interrupted. {JesterGames[e.Game.Code].Jestername} is NOT the jester.");
-                Task.Run(async () => await SorryNotJester(e.Game.GetClientPlayer(JesterGames[e.Game.Code].JesterClientId)).ConfigureAwait(false));
+                _logger.LogInformation($"Assigning Merlin interrupted. {MerlinGames[e.Game.Code].Merlinname} is NOT the merlin.");
+                Task.Run(async () => await SorryNotMerlin(e.Game.GetClientPlayer(MerlinGames[e.Game.Code].MerlinClientId)).ConfigureAwait(false));
 
-                JesterGame jgame = JesterGames[e.Game.Code];
+                MerlinGame jgame = MerlinGames[e.Game.Code];
                 jgame.CountingDown = false;
-                JesterGames[e.Game.Code] = jgame;
+                MerlinGames[e.Game.Code] = jgame;
             }
         }
 
         [EventListener]
         public void OnGamePlayerLeft(IGamePlayerLeftEvent e)
         {
-            if (JesterGames[e.Game.Code].CountingDown)
+            if (MerlinGames[e.Game.Code].CountingDown)
             {
-                _logger.LogInformation($"Assigning Jester interrupted. {JesterGames[e.Game.Code].Jestername} is NOT the jester.");
-                Task.Run(async () => await SorryNotJester(e.Game.GetClientPlayer(JesterGames[e.Game.Code].JesterClientId)).ConfigureAwait(false));
+                _logger.LogInformation($"Assigning Merlin interrupted. {MerlinGames[e.Game.Code].Merlinname} is NOT the merlin.");
+                Task.Run(async () => await SorryNotMerlin(e.Game.GetClientPlayer(MerlinGames[e.Game.Code].MerlinClientId)).ConfigureAwait(false));
 
-                JesterGame jgame = JesterGames[e.Game.Code];
+                MerlinGame jgame = MerlinGames[e.Game.Code];
                 jgame.CountingDown = false;
-                JesterGames[e.Game.Code] = jgame;
+                MerlinGames[e.Game.Code] = jgame;
             }
         }
 
-        private async Task SorryNotJester(IClientPlayer player)
+        private async Task SorryNotMerlin(IClientPlayer player)
         {
-            await ServerSendChatToPlayerAsync($"Startup interrupted. You're NOT the Jester.", player.Character).ConfigureAwait(false);
+            await ServerSendChatToPlayerAsync($"Startup interrupted. You're NOT the Merlin.", player.Character).ConfigureAwait(false);
         }        
 
         [EventListener]
         public void OnGameStarted(IGameStartedEvent e)
         {
-            JesterGame jgame = JesterGames[e.Game.Code];
+            MerlinGame jgame = MerlinGames[e.Game.Code];
             jgame.GameEnded = false;
             jgame.CountingDown = false;
-            jgame.JesterInGame = false;
-            jgame.Jesterwin = false;
-            JesterGames[e.Game.Code] = jgame;
+            jgame.MerlinInGame = false;
+            jgame.Merlinwin = false;
+            MerlinGames[e.Game.Code] = jgame;
 
             _logger.LogInformation($"Game is starting.");
-            if (JesterGames[e.Game.Code].JesterOn)
+            if (MerlinGames[e.Game.Code].MerlinOn)
             {
-                Task.Run(async () => await InformJester(e).ConfigureAwait(false));
+                Task.Run(async () => await InformMerlin(e).ConfigureAwait(false));
             }            
             // This prints out for all players if they are impostor or crewmate.
             foreach (var player in e.Game.Players)
             {
-                if (JesterGames[e.Game.Code].JesterOn && (player.Character.PlayerInfo.HatId == 27 || player.Character.PlayerInfo.HatId == 84))
+                if (MerlinGames[e.Game.Code].MerlinOn && (player.Character.PlayerInfo.HatId == 27 || player.Character.PlayerInfo.HatId == 84))
                 {
                     Task.Run(async () => await OffWithYourHat(player).ConfigureAwait(false));
                 }                
@@ -194,21 +194,21 @@ namespace Impostor.Plugins.Example.Handlers
             }
         }
 
-        private async Task InformJester(IGameStartedEvent e)
+        private async Task InformMerlin(IGameStartedEvent e)
         {
-            if (e.Game.GetClientPlayer(JesterGames[e.Game.Code].JesterClientId).Character.PlayerInfo.IsImpostor)
+            if (e.Game.GetClientPlayer(MerlinGames[e.Game.Code].MerlinClientId).Character.PlayerInfo.IsImpostor)
             {
-                _logger.LogInformation($"- {e.Game.GetClientPlayer(JesterGames[e.Game.Code].JesterClientId).Character.PlayerInfo.PlayerName} isn't jester but impostor.");
-                await ServerSendChatToPlayerAsync($"You happen to be IMPOSTER! No Jester this game.", e.Game.GetClientPlayer(JesterGames[e.Game.Code].JesterClientId).Character).ConfigureAwait(false);
+                _logger.LogInformation($"- {e.Game.GetClientPlayer(MerlinGames[e.Game.Code].MerlinClientId).Character.PlayerInfo.PlayerName} isn't merlin but impostor.");
+                await ServerSendChatToPlayerAsync($"You happen to be IMPOSTER! No Merlin this game.", e.Game.GetClientPlayer(MerlinGames[e.Game.Code].MerlinClientId).Character).ConfigureAwait(false);
             }
             else
             {
-                _logger.LogInformation($"- {e.Game.GetClientPlayer(JesterGames[e.Game.Code].JesterClientId).Character.PlayerInfo.PlayerName} is indeed jester.");
-                await ServerSendChatToPlayerAsync($"You're indeed the JESTER!", e.Game.GetClientPlayer(JesterGames[e.Game.Code].JesterClientId).Character).ConfigureAwait(false);
+                _logger.LogInformation($"- {e.Game.GetClientPlayer(MerlinGames[e.Game.Code].MerlinClientId).Character.PlayerInfo.PlayerName} is indeed merlin.");
+                await ServerSendChatToPlayerAsync($"You're indeed the JESTER!", e.Game.GetClientPlayer(MerlinGames[e.Game.Code].MerlinClientId).Character).ConfigureAwait(false);
 
-                JesterGame jgame = JesterGames[e.Game.Code];
-                jgame.JesterInGame = true;
-                JesterGames[e.Game.Code] = jgame;
+                MerlinGame jgame = MerlinGames[e.Game.Code];
+                jgame.MerlinInGame = true;
+                MerlinGames[e.Game.Code] = jgame;
             }
         }
 
@@ -220,23 +220,23 @@ namespace Impostor.Plugins.Example.Handlers
         [EventListener]
         public void OnPlayerExiled(IPlayerExileEvent e)
         {
-            if (JesterGames[e.Game.Code].JesterInGame && e.PlayerControl == e.Game.GetClientPlayer(JesterGames[e.Game.Code].JesterClientId).Character)
+            if (MerlinGames[e.Game.Code].MerlinInGame && e.PlayerControl == e.Game.GetClientPlayer(MerlinGames[e.Game.Code].MerlinClientId).Character)
             {                                
-                JesterGame jgame = JesterGames[e.Game.Code];
-                jgame.Jesterwin = true;
-                JesterGames[e.Game.Code] = jgame;
+                MerlinGame jgame = MerlinGames[e.Game.Code];
+                jgame.Merlinwin = true;
+                MerlinGames[e.Game.Code] = jgame;
 
-                _logger.LogInformation($"Jester has won!");
+                _logger.LogInformation($"Merlin has won!");
                 Task.Run(async () => await TurnTheTables(e).ConfigureAwait(false));
             }
         }
 
         private async Task TurnTheTables(IPlayerExileEvent e)
         {
-            await e.Game.GetClientPlayer(JesterGames[e.Game.Code].JesterClientId).Character.SetHatAsync(HatType.ElfHat).ConfigureAwait(false);
+            await e.Game.GetClientPlayer(MerlinGames[e.Game.Code].MerlinClientId).Character.SetHatAsync(HatType.ElfHat).ConfigureAwait(false);
             foreach (var player in e.Game.Players)
             {
-                if (player.Client.Id != JesterGames[e.Game.Code].JesterClientId)
+                if (player.Client.Id != MerlinGames[e.Game.Code].MerlinClientId)
                 {
                     await player.Character.SetHatAsync(HatType.DumSticker).ConfigureAwait(false);
                 }
@@ -257,45 +257,45 @@ namespace Impostor.Plugins.Example.Handlers
         {
             _logger.LogInformation($"Game has ended.");
 
-            JesterGame jgame = JesterGames[e.Game.Code];
+            MerlinGame jgame = MerlinGames[e.Game.Code];
             jgame.GameEnded = true;
-            JesterGames[e.Game.Code] = jgame;
+            MerlinGames[e.Game.Code] = jgame;
         }
 
         [EventListener]
         public void OnPlayerSpawned(IPlayerSpawnedEvent e)
         {
-            if (JesterGames[e.Game.Code].GameEnded && JesterGames[e.Game.Code].JesterInGame)
+            if (MerlinGames[e.Game.Code].GameEnded && MerlinGames[e.Game.Code].MerlinInGame)
             {               
-                Task.Run(async () => await JesterAnnouncement(e).ConfigureAwait(false));
+                Task.Run(async () => await MerlinAnnouncement(e).ConfigureAwait(false));
             }
         }
 
-        private async Task JesterAnnouncement(IPlayerSpawnedEvent e)
+        private async Task MerlinAnnouncement(IPlayerSpawnedEvent e)
         {
-            if (JesterGames[e.Game.Code].Jesterwin)
+            if (MerlinGames[e.Game.Code].Merlinwin)
             {
                 await Task.Delay(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
-                await ServerSendChatToPlayerAsync($"{JesterGames[e.Game.Code].Jestername} was Jester and won by getting ejected!", e.PlayerControl).ConfigureAwait(false);
+                await ServerSendChatToPlayerAsync($"{MerlinGames[e.Game.Code].Merlinname} was Merlin and won by getting ejected!", e.PlayerControl).ConfigureAwait(false);
             }
             else
             {
                 await Task.Delay(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
-                await ServerSendChatToPlayerAsync($"{JesterGames[e.Game.Code].Jestername} was Jester, but didn't get voted out.", e.PlayerControl).ConfigureAwait(false);                
+                await ServerSendChatToPlayerAsync($"{MerlinGames[e.Game.Code].Merlinname} was Merlin, but didn't get voted out.", e.PlayerControl).ConfigureAwait(false);                
             }
         }
 
         [EventListener]
         public void OnGameDestroyed(IGameDestroyedEvent e)
         {
-            JesterGames.Remove(e.Game.Code);
+            MerlinGames.Remove(e.Game.Code);
         }
 
         [EventListener]
         public void OnPlayerChat(IPlayerChatEvent e)
         {
             _logger.LogInformation($"{e.PlayerControl.PlayerInfo.PlayerName} said {e.Message}");
-            if (e.Game.GameState == GameStates.NotStarted && !JesterGames[e.Game.Code].CountingDown && e.Message.StartsWith("/"))
+            if (e.Game.GameState == GameStates.NotStarted && !MerlinGames[e.Game.Code].CountingDown && e.Message.StartsWith("/"))
             {
                 Task.Run(async () => await RunCommands(e).ConfigureAwait(false));
             }
@@ -306,14 +306,14 @@ namespace Impostor.Plugins.Example.Handlers
             switch (e.Message.ToLowerInvariant())
             {
                 case "/j on":
-                case "/jester on":
+                case "/merlin on":
                     if (e.ClientPlayer.IsHost)
                     {
-                        JesterGame jgame = JesterGames[e.Game.Code];
-                        jgame.JesterOn = true;
-                        JesterGames[e.Game.Code] = jgame;
+                        MerlinGame jgame = MerlinGames[e.Game.Code];
+                        jgame.MerlinOn = true;
+                        MerlinGames[e.Game.Code] = jgame;
 
-                        await ServerSendChatAsync("The Jester role is now on!", e.PlayerControl).ConfigureAwait(false);
+                        await ServerSendChatAsync("The Merlin role is now on!", e.PlayerControl).ConfigureAwait(false);
                     }
                     else
                     {
@@ -321,14 +321,14 @@ namespace Impostor.Plugins.Example.Handlers
                     }
                     break;
                 case "/j off":
-                case "/jester off":
+                case "/merlin off":
                     if (e.ClientPlayer.IsHost)
                     {
-                        JesterGame jgame = JesterGames[e.Game.Code];
-                        jgame.JesterOn = false;
-                        JesterGames[e.Game.Code] = jgame;
+                        MerlinGame jgame = MerlinGames[e.Game.Code];
+                        jgame.MerlinOn = false;
+                        MerlinGames[e.Game.Code] = jgame;
 
-                        await ServerSendChatAsync("The Jester role is now off!", e.PlayerControl).ConfigureAwait(false);
+                        await ServerSendChatAsync("The Merlin role is now off!", e.PlayerControl).ConfigureAwait(false);
                     }
                     else
                     {
@@ -336,14 +336,14 @@ namespace Impostor.Plugins.Example.Handlers
                     }
                     break;
                 case "/j help":
-                case "/jester help":
-                    await ServerSendChatAsync("When the special Jester role is on, one crewmate is Jester.", e.PlayerControl).ConfigureAwait(false);  
-                    await ServerSendChatAsync("In addition to the ways in which a normal crewmate can win, the Jester can win by getting voted out.", e.PlayerControl).ConfigureAwait(false);
+                case "/merlin help":
+                    await ServerSendChatAsync("When the special Merlin role is on, one crewmate is Merlin.", e.PlayerControl).ConfigureAwait(false);  
+                    await ServerSendChatAsync("In addition to the ways in which a normal crewmate can win, the Merlin can win by getting voted out.", e.PlayerControl).ConfigureAwait(false);
                     await ServerSendChatAsync("If this happens all the other players lose, so be careful who you vote during meetings!", e.PlayerControl).ConfigureAwait(false);
-                    await ServerSendChatAsync("The host can turn the Jester role on and off by typing '/jester on' or '/jester off'.", e.PlayerControl).ConfigureAwait(false);
+                    await ServerSendChatAsync("The host can turn the Merlin role on and off by typing '/merlin on' or '/merlin off'.", e.PlayerControl).ConfigureAwait(false);
                     break;
                 default:
-                    await ServerSendChatAsync("Error. Possible commands are '/jester help', '/jester on', '/jester off'.", e.PlayerControl).ConfigureAwait(false);  
+                    await ServerSendChatAsync("Error. Possible commands are '/merlin help', '/merlin on', '/merlin off'.", e.PlayerControl).ConfigureAwait(false);  
                     break;                                     
             }
         }
